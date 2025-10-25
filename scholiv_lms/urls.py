@@ -1,23 +1,9 @@
 """
 URL configuration for scholiv_lms project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
 from django.urls import path, include
 
-# New imports from the Simple JWT library
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -26,13 +12,19 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # This is the new line you are adding.
-    # It tells Django to include all URLs from the 'users.urls' file
-    # and prefix them with 'api/users/'.
+    # 1. User App URLs
     path('api/users/', include('users.urls')),
 
-    # These are the new lines for the login and refresh endpoints.
+    # 2. JWT Token Endpoints (for the frontend app)
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # 3. Admin Portal (Courses) App
+    path('api/', include('courses.urls')),
+
+    # 4. NEW: Browsable API Login
+    # This is the new line that will add the "Log in"
+    # button to the top-right corner of the page.
+    path('api-auth/', include('rest_framework.urls')),
 ]
 
