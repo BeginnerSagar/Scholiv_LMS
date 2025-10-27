@@ -2,42 +2,34 @@ from rest_framework import serializers
 from .models import School, Class, Subject, Lecture, Attendance
 
 class SchoolSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the School model.
-    """
     class Meta:
         model = School
-        fields = ['id', 'name', 'address']
+        fields = '__all__'
 
 class ClassSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Class model.
-    """
     class Meta:
         model = Class
-        fields = ['id', 'name', 'school']
+        fields = '__all__'
 
 class SubjectSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Subject model.
-    """
     class Meta:
         model = Subject
-        fields = ['id', 'name']
+        fields = '__all__'
 
 class LectureSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Lecture model.
-    """
     class Meta:
         model = Lecture
-        fields = ['id', 'title', 'description', 'video_url', 'topic', 'class_assigned', 'subject']
+        fields = '__all__'
 
 class AttendanceSerializer(serializers.ModelSerializer):
     """
-    Serializer for the Attendance model.
+    This is the corrected serializer.
+    By using 'fields = "__all__"', it will now correctly only use the
+    fields that exist on the Attendance model:
+    'id', 'student', 'lecture', and 'date'.
     """
     class Meta:
         model = Attendance
-        fields = ['id', 'student', 'lecture', 'date', 'is_present']
+        fields = '__all__'
 
+        # Corrected to use '__all__' to include only model fields
