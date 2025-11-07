@@ -1,49 +1,35 @@
-from rest_framework.permissions import BasePermission
+from rest_framework import permissions
+from users.models import Role # Import our new Role class
 
-class IsSuperAdmin(BasePermission):
+class IsSuperAdmin(permissions.BasePermission):
     """
-    Allows access only to SuperAdmins.
-    This includes the user you created with 'createsuperuser'.
+    Allows access only to SuperAdmin users.
     """
-
+    message = 'You must be a Super Admin to perform this action.'
     def has_permission(self, request, view):
-        # request.user is available because we use IsAuthenticated
-        return request.user and (
-            request.user.is_superuser or 
-            request.user.role == 'super_admin'
+        return request.user.is_authenticated and (
+            request.user.role == Role.SUPER_ADMIN or request.user.is_superuser
         )
 
-
-class IsSchoolAdmin(BasePermission):
+class IsSchoolAdmin(permissions.BasePermission):
     """
-    Allows access only to School Admins.
-    We also check for SuperAdmin, as they should be able to do anything.
+    Allows access only to SchoolAdmin users or SuperAdmins.
     """
-
+    message = 'You must be a School Admin to perform this action.'
     def has_permission(self, request, view):
-        return request.user and (
-            request.user.is_superuser or
-            request.user.role == 'super_admin' or
-            request.user.role == 'school_admin'
+        return request.user.is_authenticated and (
+            request.user.role == Role.SCHOOL_ADMIN or 
+            request.user.is_superuser
         )
 
-
-class IsTeacher(BasePermission):
+class IsTeacher(permissions.BasePermission):
     """
-    Allows access only to Teachers.
-    We also include Admins and SuperAdmins.
+    Allows access only to Teacher users, SchoolAdmins, or SuperAdmins.
     """
-
+    message = 'You must be a Teacher to perform this action.'
     def has_permission(self, request, view):
-        return request.user and (
-            request.user.is_superuser or
-            request.user.role == 'super_admin' or
-            request.user.role == 'school_admin' or
-            request.user.role == 'teacher'
+        return request.user.is_authenticated and (
+            request.user.role == Role.TEACHER or
+            request.user.role == Role.SCHOOL_ADMIN or
+            request.user.is_superuser
         )
-
-# Note: We don't need a permission for 'Student' because the default
-# behavior will be to deny access unless one of these permissions is met.
-# Authenticated students will have a 'student' role but will fail
-# these permission checks, which is what we want for Admin endpoints.
-

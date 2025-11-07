@@ -1,1 +1,25 @@
-Django-specific ignores*.log*.pot*.pycpycache/local_settings.pydb.sqlite3media/Virtual Environmentvenv/env/ENV/
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Static files
+/static/
+
+# Media files
+/media/
+
+# --- ADD THIS LINE ---
+# Ignore environment variables file
+.env
+```
