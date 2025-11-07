@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Scholiv Education - Messages</title>
+	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+	<div class="dashboard-container">
+		<div class="sidebar left-sidebar">
+			<div class="logo-section">
+				<img src="images/Scholiv logo (20250828012129).png" alt="Scholiv Education Logo" class="logo">
+				<h1>Scholiv <br> Education</h1>
+			</div>
+			<nav class="nav-menu">
+				<ul>
+					<li><a href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a></li>
+					<li><a href="calendar.html"><i class="far fa-calendar-alt"></i> Calender</a></li>
+					<li><a href="classroom.html"><i class="fas fa-chalkboard-teacher"></i> Classroom</a></li>
+					<li><a href="courses.html"><i class="fas fa-star"></i> Courses</a></li>
+					<li><a href="library.html"><i class="fas fa-building-columns"></i> 📚 Library</a></li>
+					<li><a href="attendance.html"><i class="fas fa-user-check"></i> Attendance</a></li>
+					<li class="active"><a href="messages.html"><i class="fas fa-envelope"></i> Messages</a></li>
+					<li><a href="help.html"><i class="fas fa-question-circle"></i> Help</a></li>
+					<li><a href="settings.html"><i class="fas fa-cog"></i> Setting</a></li>
+					<li><a href="#"><i class="fas fa-sign-out-alt"></i> Log out</a></li>
+				</ul>
+			</nav>
+		</div>
+
+		<div class="main-content">
+			<header class="main-header">
+				<h2>Messages</h2>
+				<div class="search-bar">
+					<i class="fas fa-search"></i>
+					<input type="text" placeholder="Search">
+				</div>
+				<div class="header-icons">
+					<i class="far fa-bell"></i>
+					<i class="far fa-envelope"></i>
+				</div>
+			</header>
+
+			<section class="messages-section card">
+				<div class="messages-layout">
+					<div class="chat-list">
+						<div class="tabs">
+							<button class="tab active">Chat</button>
+							<button class="tab">Groups</button>
+						</div>
+						<div class="chat-item active">
+							<img src="https://via.placeholder.com/32" class="chat-avatar" alt="User">
+							<div>
+								<div class="chat-name">Robin smith</div>
+								<div class="chat-last">1d</div>
+							</div>
+						</div>
+						<div class="chat-item">
+							<img src="https://via.placeholder.com/32" class="chat-avatar" alt="User">
+							<div>
+								<div class="chat-name">Arun Kumar</div>
+								<div class="chat-last">1d</div>
+							</div>
+						</div>
+					</div>
+					<div class="chat-window">
+						<div class="chat-header">
+							<div class="chat-peer">
+								<img src="https://via.placeholder.com/36" class="chat-avatar" alt="peer">
+								<div>
+									<div class="chat-name">Deepthi manohar</div>
+									<div class="chat-status">Online • Last seen 3:00 pm</div>
+								</div>
+							</div>
+							<div class="chat-actions"><i class="fas fa-phone"></i><i class="fas fa-video"></i><i class="fas fa-ellipsis-vertical"></i></div>
+						</div>
+						<div class="chat-body">
+							<div class="bubble left">Hey There?</div>
+							<div class="bubble left">How are you?</div>
+							<div class="bubble right primary">Hello!</div>
+							<div class="bubble right primary">I am fine and how are you?</div>
+							<div class="bubble left">Good</div>
+							<div class="bubble right primary">have you submitted your assignments?</div>
+							<div class="bubble left">yes.</div>
+						</div>
+						<div class="chat-input">
+							<input type="text" placeholder="Type a message">
+							<button class="btn primary">Send</button>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+	</div>
+</body>
+</html>
