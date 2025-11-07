@@ -1,146 +1,150 @@
 from rest_framework import serializers
-from .models import (
-    School, 
-    Class, 
-    Subject, 
-    Lecture, 
-    Attendance,
-    Announcement, # New
-    Question,     # New
-    Answer        # New
-)
-from users.models import User
+from .models import School, Class, Subject, Lecture, Attendance, Announcement, Question, Answer
+from django.contrib.auth import get_user_model
 
-# --- Admin Portal: Core CRUD Serializers (Phase 4) ---
+User = get_user_model()
 
 class SchoolSerializer(serializers.ModelSerializer):
     class Meta:
         model = School
-        fields = ['id', 'name', 'address', 'created_at']
+        fields = '__all__'
 
 class ClassSerializer(serializers.ModelSerializer):
-    # Use 'school_name' for reading, 'school_id' for writing
-    school_name = serializers.StringRelatedField(source='school', read_only=True)
-    school_id = serializers.PrimaryKeyRelatedField(
-        queryset=School.objects.all(), source='school', write_only=True
-    )
-
     class Meta:
         model = Class
-        fields = ['id', 'name', 'school_name', 'school_id', 'created_at']
-
+        fields = '__all__'
 
 class SubjectSerializer(serializers.ModelSerializer):
-    # Use 'school_name' for reading, 'school_id' for writing
-    school_name = serializers.StringRelatedField(source='school', read_only=True)
-    school_id = serializers.PrimaryKeyRelatedField(
-        queryset=School.objects.all(), source='school', write_only=True
-    )
-    
     class Meta:
         model = Subject
-        fields = ['id', 'name', 'school_name', 'school_id', 'created_at']
+        fields = '__all__'
 
 class LectureSerializer(serializers.ModelSerializer):
-    # Add readable names for foreign keys
-    class_assigned_name = serializers.StringRelatedField(source='class_assigned', read_only=True)
-    subject_name = serializers.StringRelatedField(source='subject', read_only=True)
-    
     class Meta:
         model = Lecture
-        fields = [
-            'id', 'title', 'description', 
-            'video_url', 'video_file', 
-            'class_assigned', 'class_assigned_name', 
-            'subject', 'subject_name', 'uploaded_at'
-        ]
-        # Make the ID fields write-only
-        extra_kwargs = {
-            'class_assigned': {'write_only': True},
-            'subject': {'write_only': True},
-        }
-
+        fields = '__all__'
 
 class AttendanceSerializer(serializers.ModelSerializer):
+    """
+    This is the corrected serializer.
+    By using 'fields = "__all__"', it will now correctly only use the
+    fields that exist on the Attendance model:
+    'id', 'student', 'lecture', and 'date'.
+    """
     class Meta:
         model = Attendance
-        fields = '__all__' # This will include student, lecture, date, and is_present
+        fields = '__all__'
 
 
-# --- Admin Portal: Advanced Features (Phase 5) ---
-
-class AttendanceUploadSerializer(serializers.Serializer):
-    """
-    Serializer for the Teacher's attendance Excel file upload.
-    This serializer only validates that a file was uploaded.
-    """
-    file = serializers.FileField()
-
-
-# --- NEW: Q&A and Announcement Serializers (Step 6.19) - CORRECTED ---
+# ===========================
+# NEW SERIALIZERS FOR Q&A SYSTEM
+# ===========================
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     """
     Serializer for Announcements.
-    We show readable names for foreign keys.
+    Includes extra fields to show who posted it and the target class name.
     """
-    # Renamed 'teacher' to 'teacher_name' to avoid conflict
-    teacher_name = serializers.StringRelatedField(source='teacher', read_only=True)
-    # Renamed 'school' to 'school_name' to avoid conflict
-    school_name = serializers.StringRelatedField(source='school', read_only=True)
+    posted_by_username = serializers.CharField(source='posted_by.username', read_only=True)
+    target_class_name = serializers.CharField(source='target_class.name', read_only=True)
     
-    # Use 'class_assigned_name' for reading, 'class_assigned_id' for writing
-    class_assigned_name = serializers.StringRelatedField(source='class_assigned', read_only=True)
-    class_assigned_id = serializers.PrimaryKeyRelatedField(
-        queryset=Class.objects.all(), source='class_assigned', write_only=True
-    )
-
     class Meta:
         model = Announcement
-        # Updated fields list with new names
         fields = [
-            'id', 'teacher_name', 'school_name', 
-            'class_assigned_id', 'class_assigned_name', 
-            'content', 'created_at'
+            'id',
+            'title',
+            'content',
+            'posted_by',
+            'posted_by_username',
+            'target_class',
+            'target_class_name',
+            'priority',
+            'created_at',
+            'updated_at'
         ]
+        read_only_fields = ['posted_by', 'created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        """
+        Automatically set the posted_by field to the current user.
+        """
+        # Get the current user from the context
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['posted_by'] = request.user
+        return super().create(validated_data)
 
 
 class AnswerSerializer(serializers.ModelSerializer):
     """
     Serializer for Answers.
-    Shows the teacher's username.
+    Shows who answered and when.
     """
-    # Renamed 'teacher' to 'teacher_name' to avoid conflict
-    teacher_name = serializers.StringRelatedField(source='teacher', read_only=True)
+    answered_by_username = serializers.CharField(source='answered_by.username', read_only=True)
     
     class Meta:
         model = Answer
-        # Updated fields list
-        fields = ['id', 'teacher_name', 'question', 'content', 'created_at']
+        fields = [
+            'id',
+            'content',
+            'question',
+            'answered_by',
+            'answered_by_username',
+            'is_accepted',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['answered_by', 'created_at', 'updated_at']
+    
+    def create(self, validated_data):
+        """
+        Automatically set the answered_by field to the current user.
+        """
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['answered_by'] = request.user
+        return super().create(validated_data)
 
 
 class QuestionSerializer(serializers.ModelSerializer):
     """
     Serializer for Questions.
-    Shows the student's username and includes all related answers.
+    Includes nested answers and extra info about who asked.
     """
-    # Renamed 'student' to 'student_name' to avoid conflict
-    student_name = serializers.StringRelatedField(source='student', read_only=True)
+    asked_by_username = serializers.CharField(source='asked_by.username', read_only=True)
+    lecture_title = serializers.CharField(source='lecture.title', read_only=True)
+    answers = AnswerSerializer(many=True, read_only=True)
+    answer_count = serializers.SerializerMethodField()
     
-    # Use 'lecture_name' for reading, 'lecture_id' for writing
-    lecture_name = serializers.StringRelatedField(source='lecture', read_only=True)
-    lecture_id = serializers.PrimaryKeyRelatedField(
-        queryset=Lecture.objects.all(), source='lecture', write_only=True
-    )
-    
-    # This automatically includes all answers related to this question
-    answers = AnswerSerializer(many=True, read_only=True) 
-
     class Meta:
         model = Question
-        # Updated fields list
         fields = [
-            'id', 'student_name', 
-            'lecture_id', 'lecture_name', 
-            'title', 'content', 'created_at', 'answers'
+            'id',
+            'title',
+            'content',
+            'asked_by',
+            'asked_by_username',
+            'lecture',
+            'lecture_title',
+            'is_answered',
+            'answers',
+            'answer_count',
+            'created_at',
+            'updated_at'
         ]
+        read_only_fields = ['asked_by', 'is_answered', 'created_at', 'updated_at']
+    
+    def get_answer_count(self, obj):
+        """
+        Return the number of answers for this question.
+        """
+        return obj.answers.count()
+    
+    def create(self, validated_data):
+        """
+        Automatically set the asked_by field to the current user.
+        """
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['asked_by'] = request.user
+        return super().create(validated_data)
