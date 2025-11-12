@@ -1,1 +1,23 @@
-Django-specific ignores*.log*.pot*.pycpycache/local_settings.pydb.sqlite3media/Virtual Environmentvenv/env/ENV/
+# --- Bytecode and Caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Virtual Environment ---
+/venv/
+
+# --- Database Files ---
+*.sqlite3
+*.sql
+
+# --- CRITICAL: Secrets ---
+# (This is the new, important line for AWS)
+.env
+
+# --- Local Media Files ---
+# (We will ignore the media folder in case S3 is off)
+/media/
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db

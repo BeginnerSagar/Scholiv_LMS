@@ -1,14 +1,13 @@
 from django.urls import path
-from .views import UserRegistrationView
+from . import views
 
-# This list defines the URL patterns for the 'users' app.
+# This app_name is optional but good practice
+app_name = 'users'
+
 urlpatterns = [
-    # When a request comes to 'register/', it will be handled by UserRegistrationView.
-    path('register/', UserRegistrationView.as_view(), name='user-register'),
+    # Path for user registration
+    path('register/', views.UserRegistrationView.as_view(), name='register'),
+    
+    # Path for the SchoolAdmin to bulk upload students
+    path('students/upload/', views.StudentUploadView.as_view(), name='student-upload'),
 ]
-
-# from django.urls import path
-# from .views import UserRegistrationView
-# urlpathtterns = [
-#     path('register/', UserRegistrationView.as_view(), name='user-register'),
-# ]
