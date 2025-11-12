@@ -1,23 +1,13 @@
-# --- Bytecode and Caches ---
+# Ignore DB and compiled files
+db.sqlite3
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
 
-# --- Virtual Environment ---
-/venv/
+# Ignore static & media
+staticfiles/
+media/
+Frontend/
 
-# --- Database Files ---
-*.sqlite3
-*.sql
-
-# --- CRITICAL: Secrets ---
-# (This is the new, important line for AWS)
+# Virtual environment
+venv/
 .env
-
-# --- Local Media Files ---
-# (We will ignore the media folder in case S3 is off)
-/media/
-
-# --- OS Files ---
-.DS_Store
-Thumbs.db
