@@ -1,25 +1,23 @@
-# Django
-*.log
-*.pot
-*.pyc
+# --- Bytecode and Caches ---
 __pycache__/
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+*.py[cod]
+*$py.class
 
-# Virtual Environment
-venv/
-env/
-ENV/
-.venv/
+# --- Virtual Environment ---
+/venv/
 
-# Static files
-/static/
+# --- Database Files ---
+*.sqlite3
+*.sql
 
-# Media files
+# --- CRITICAL: Secrets ---
+# (This is the new, important line for AWS)
+.env
+
+# --- Local Media Files ---
+# (We will ignore the media folder in case S3 is off)
 /media/
 
-# --- ADD THIS LINE ---
-# Ignore environment variables file
-.env
-```
+# --- OS Files ---
+.DS_Store
+Thumbs.db

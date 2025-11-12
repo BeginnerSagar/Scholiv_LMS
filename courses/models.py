@@ -1,182 +1,165 @@
 from django.db import models
-from django.conf import settings
-
-# Get the User model we defined in our 'users' app
-User = settings.AUTH_USER_MODEL
+from users.models import User
 
 class School(models.Model):
-    name = models.CharField(max_length=255)
-    address = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=200)
+    address = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
 
-class Class(models.Model):
-    # e.g., "Class 10", "Class 12"
-    name = models.CharField(max_length=100) 
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='classes')
 
-    def __str__(self):
-        return f"{self.name} - {self.school.name}"
+class Class(models.Model):
+    name = models.CharField(max_length=100)
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='classes')
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = "Classes"
 
-class Subject(models.Model):
-    name = models.CharField(max_length=100) # e.g., "Mathematics"
-    
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.school.name}"
+
+
+class Subject(models.Model):
+    name = models.CharField(max_length=100)
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='subjects')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.school.name}"
+
 
 class Lecture(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    
+    # Video URL for external links (YouTube, Vimeo, etc.)
     video_url = models.URLField(max_length=1024, blank=True, null=True)
-    # You can also use FileField for local uploads:
-    # video_file = models.FileField(upload_to='lectures/', blank=True, null=True)
+    
+    # UPDATED: Uncommented FileField for S3 upload
+    # This will automatically upload to AWS S3 when a file is provided
+    video_file = models.FileField(
+        upload_to='lectures/',  # S3 folder structure
+        blank=True, 
+        null=True,
+        help_text="Upload video file (will be stored in AWS S3)"
+    )
     
     # Relationships based on requirements
-    class_assigned = models.ForeignKey(Class, on_delete=models.SET_NULL, null=True, related_name='lectures')
-    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, related_name='lectures')
-    topic = models.CharField(max_length=255, blank=True, null=True) # e.g., "Chapter 1: Algebra"
+    class_assigned = models.ForeignKey(
+        Class, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='lectures'
+    )
+    subject = models.ForeignKey(
+        Subject, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='lectures'
+    )
+    topic = models.CharField(max_length=255, blank=True, null=True)
     
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return self.title
-
-class Attendance(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='attendance_records')
-    lecture = models.ForeignKey(Lecture, on_delete=models.SET_NULL, null=True)
-    date = models.DateField()
-    present = models.BooleanField(default=False)
-    
-    # This will be used for the "auto-mark present" feature
-    watched_video = models.BooleanField(default=False) 
 
     def __str__(self):
-        return f"{self.student.username} - {self.date} - Present: {self.present}"
-
-
-# ===========================
-# NEW MODELS FOR Q&A SYSTEM
-# ===========================
-
-class Announcement(models.Model):
-    """
-    Announcements that Teachers and School Admins can post.
-    Visible to all students in the specified class.
-    """
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-    
-    # Who posted this announcement
-    posted_by = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name='announcements_posted'
-    )
-    
-    # Which class should see this announcement
-    target_class = models.ForeignKey(
-        Class, 
-        on_delete=models.CASCADE, 
-        related_name='announcements'
-    )
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    # Priority level (optional feature for later)
-    PRIORITY_CHOICES = (
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-    )
-    priority = models.CharField(
-        max_length=10, 
-        choices=PRIORITY_CHOICES, 
-        default='medium'
-    )
+        return f"{self.title} - {self.subject.name}"
 
     class Meta:
-        ordering = ['-created_at']  # Show newest first
-
-    def __str__(self):
-        return f"{self.title} - {self.target_class.name}"
+        ordering = ['-uploaded_at']
 
 
-class Question(models.Model):
-    """
-    Questions that Students can ask about a specific lecture.
-    """
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-    
-    # Who asked this question
-    asked_by = models.ForeignKey(
+class Attendance(models.Model):
+    student = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
-        related_name='questions_asked'
+        related_name='attendances',
+        limit_choices_to={'role': 'STUDENT'}
     )
-    
-    # Which lecture is this question about
     lecture = models.ForeignKey(
         Lecture, 
         on_delete=models.CASCADE, 
-        related_name='questions'
+        related_name='attendances'
     )
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    # Track if the question has been answered
-    is_answered = models.BooleanField(default=False)
+    date = models.DateField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']  # Show newest first
+        unique_together = ('student', 'lecture', 'date')
+        ordering = ['-date']
 
     def __str__(self):
-        return f"Q: {self.title} by {self.asked_by.username}"
+        return f"{self.student.username} - {self.lecture.title} - {self.date}"
+
+
+class Announcement(models.Model):
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='announcements',
+        limit_choices_to={'role': 'TEACHER'}
+    )
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name='announcements'
+    )
+    class_assigned = models.ForeignKey(
+        Class,
+        on_delete=models.CASCADE,
+        related_name='announcements'
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Announcement by {self.teacher.username} for {self.class_assigned.name}"
+
+
+class Question(models.Model):
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='questions',
+        limit_choices_to={'role': 'STUDENT'}
+    )
+    lecture = models.ForeignKey(
+        Lecture,
+        on_delete=models.CASCADE,
+        related_name='questions'
+    )
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} by {self.student.username}"
 
 
 class Answer(models.Model):
-    """
-    Answers that Teachers can provide to student questions.
-    """
-    content = models.TextField()
-    
-    # Which question is this answering
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='answers',
+        limit_choices_to={'role': 'TEACHER'}
+    )
     question = models.ForeignKey(
-        Question, 
-        on_delete=models.CASCADE, 
+        Question,
+        on_delete=models.CASCADE,
         related_name='answers'
     )
-    
-    # Who answered this question
-    answered_by = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name='answers_given'
-    )
-    
+    content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    # Mark if this is the "accepted" or "best" answer
-    is_accepted = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['created_at']  # Show oldest first (chronological)
+        ordering = ['created_at']
 
     def __str__(self):
-        return f"A: {self.content[:50]}... by {self.answered_by.username}"
-
-    def save(self, *args, **kwargs):
-        """
-        Override save to automatically mark the question as answered.
-        """
-        super().save(*args, **kwargs)
-        # When an answer is saved, mark the question as answered
-        self.question.is_answered = True
-        self.question.save()
+        return f"Answer by {self.teacher.username} to '{self.question.title}'"
