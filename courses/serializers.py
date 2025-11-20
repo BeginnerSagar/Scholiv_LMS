@@ -205,3 +205,9 @@ class QuestionSerializer(serializers.ModelSerializer):
         if request and hasattr(request, 'user'):
             validated_data['asked_by'] = request.user
         return super().create(validated_data)
+    
+    
+class AttendanceUploadSerializer(serializers.Serializer):
+    """    Serializer for attendance Excel file upload."""
+    file = serializers.FileField()
+    
