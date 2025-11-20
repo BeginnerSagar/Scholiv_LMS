@@ -1,4 +1,6 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from .models import School, Class, Subject, Lecture, Attendance, Announcement, Question, Answer
 from .serializers import (
     SchoolSerializer, 
@@ -48,11 +50,66 @@ class SubjectViewSet(viewsets.ModelViewSet):
 class LectureViewSet(viewsets.ModelViewSet):
     """
     API endpoint for SuperAdmins to manage the master Lecture list.
+    Includes video upload functionality.
     """
     queryset = Lecture.objects.all()
     serializer_class = LectureSerializer
     # Only SuperAdmins can upload/manage the core Scholive lectures
     permission_classes = [permissions.IsAuthenticated, IsSuperAdmin]
+    
+    @action(detail=True, methods=['post'], parser_classes=['rest_framework.parsers.MultiPartParser'])
+    def upload_video(self, request, pk=None):
+        """
+        Custom endpoint to upload a video file for a specific lecture.
+        URL: /api/lectures/{id}/upload_video/
+        Method: POST
+        Body: multipart/form-data with 'video' file field
+        """
+        lecture = self.get_object()
+        video_file = request.FILES.get('video')
+        
+        if not video_file:
+            return Response(
+                {'error': 'No video file provided. Please upload a video file.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file type (optional but recommended)
+        allowed_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
+        file_extension = video_file.name.lower()[video_file.name.rfind('.'):]
+        
+        if file_extension not in allowed_extensions:
+            return Response(
+                {
+                    'error': f'Invalid file type. Allowed types: {", ".join(allowed_extensions)}',
+                    'uploaded_extension': file_extension
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file size (e.g., max 500MB)
+        max_size_mb = 500
+        if video_file.size > max_size_mb * 1024 * 1024:
+            return Response(
+                {
+                    'error': f'File too large. Maximum size is {max_size_mb}MB.',
+                    'uploaded_size_mb': round(video_file.size / (1024 * 1024), 2)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save the video file (will upload to S3 automatically)
+        lecture.video_file = video_file
+        lecture.file_size_mb = round(video_file.size / (1024 * 1024), 2)
+        lecture.save()
+        
+        return Response({
+            'message': 'Video uploaded successfully!',
+            'lecture_id': lecture.id,
+            'lecture_title': lecture.title,
+            'video_url': lecture.get_video_url(),
+            'file_size_mb': lecture.file_size_mb
+        }, status=status.HTTP_200_OK)
 
 class AttendanceViewSet(viewsets.ModelViewSet):
     """

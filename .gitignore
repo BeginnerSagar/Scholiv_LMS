@@ -2,6 +2,9 @@
 db.sqlite3
 __pycache__/
 *.pyc
+*.pyo
+test.py
+.env
 
 # Ignore static & media
 staticfiles/
