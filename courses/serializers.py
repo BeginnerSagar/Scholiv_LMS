@@ -210,4 +210,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 class AttendanceUploadSerializer(serializers.Serializer):
     """    Serializer for attendance Excel file upload."""
     file = serializers.FileField()
-    
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(required=True, style={'input_type': 'password'})
+    confirm_password = serializers.CharField(required=True, style={'input_type': 'password'})
