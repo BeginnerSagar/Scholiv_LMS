@@ -6,9 +6,11 @@ from .student_views import (
     StudentLecturesView,
     StudentLectureDetailView,
     StudentAttendanceView,
-    StudentProfileView,       # <--- New Import
-    StudentChangePasswordView # <--- New Import
+    StudentProfileView,
+    StudentChangePasswordView,
+    MarkLectureWatchedView,  # <--- NEW IMPORT
 )
+from .report_views import AttendanceReportView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -36,10 +38,16 @@ urlpatterns = [
     path('student/lectures/', StudentLecturesView.as_view(), name='student-lectures'),
     path('student/lectures/<int:pk>/', StudentLectureDetailView.as_view(), name='student-lecture-detail'),
     
+    # --- New URL for Marking Watched ---
+    path('student/lectures/<int:pk>/mark-watched/', MarkLectureWatchedView.as_view(), name='mark-lecture-watched'),
+    
     # 3. Attendance
     path('student/attendance/', StudentAttendanceView.as_view(), name='student-attendance'),
     
-    # 4. Profile & Security (NEW)
+    # 4. Profile & Security
     path('student/profile/', StudentProfileView.as_view(), name='student-profile'),
     path('student/change-password/', StudentChangePasswordView.as_view(), name='student-change-password'),
+
+    # Reporting URLs
+    path('reports/attendance/', AttendanceReportView.as_view(), name='attendance-report'),
 ]

@@ -450,3 +450,75 @@ class StudentChangePasswordView(APIView):
             
         # Return errors if fields are missing
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    # Add this at the end of your student_views.py file
+
+# Add this at the end of your student_views.py file
+
+class MarkLectureWatchedView(APIView):
+    """
+    API endpoint for students to mark a lecture as watched.
+    URL: /api/student/lectures/<id>/mark-watched/
+    Method: POST
+    
+    This is called by the frontend when a student watches a video.
+    It ONLY updates the watched_video field, NOT the present field.
+    """
+    permission_classes = [IsAuthenticated, IsStudent]
+    
+    def post(self, request, pk):
+        user = request.user
+        
+        # 1. Get the lecture
+        try:
+            lecture = Lecture.objects.get(pk=pk)
+        except Lecture.DoesNotExist:
+            return Response(
+                {"error": "Lecture not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 2. Verify lecture is for student's class
+        if user.assigned_class and lecture.class_assigned != user.assigned_class:
+            return Response(
+                {"error": "You don't have access to this lecture."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 3. Check if video exists
+        if not lecture.video_file and not lecture.video_url:
+            return Response(
+                {"error": "This lecture has no video to watch."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 4. Get today's date
+        from datetime import date
+        today = date.today()
+        
+        # 5. Create or Update attendance record
+        # ONLY update watched_video, do NOT touch 'present' field
+        attendance, created = Attendance.objects.get_or_create(
+            student=user,
+            lecture=lecture,
+            date=today,
+            defaults={
+                'watched_video': True,
+                'present': False  # Teacher will mark this manually
+            }
+        )
+        
+        # If record already existed, just update watched_video
+        if not created:
+            attendance.watched_video = True
+            attendance.save()
+        
+        return Response({
+            "message": "Video marked as watched!",
+            "lecture_id": lecture.id,
+            "lecture_title": lecture.title,
+            "watched_video": True,
+            "date": today,
+            "is_new_record": created
+        }, status=status.HTTP_200_OK)
